@@ -1,68 +1,54 @@
 import React, { useEffect, useState } from 'react'
 import { API_URL } from './config'
 import ModalImage from './ModalImage'
+import GalleryItem from './GalleryItem'
+import InfiniteScroll from 'react-infinite-scroller'
+
 const log = console.log
 
-const GalleryItem = props => {
-  const { tapHandlerCallback: tapHandler } = props
-  return (
-    <div className="galItem">
-      <div className="d-block mb-4 h-100">
-        <b
-          onClick={() => tapHandler(props.images.original.url)}
-          className="img"
-          style={{
-            backgroundImage: `url(${props.images.fixed_width.url})`,
-          }}
-        />
-        {props.user && (
-          <b className="u d-block text-left mt-2">
-            <b
-              className="u-avat mr-1"
-              style={{
-                borderRadius: '50%',
-                border: '2px solid #fff',
-                backgroundPosition: '50%',
-                backgroundSize: 'cover',
-                height: 24,
-                width: 24,
-                display: 'inline-block',
-                verticalAlign: 'middle',
-                backgroundImage: `url(${props.user.avatar_url})`,
-              }}
-            />
-            <b className="small">{props.user.display_name}</b>
-          </b>
-        )}
-      </div>
-    </div>
-  )
-}
 const Gallery = () => {
   const tapHandler = url => {
     setShowImageFullUrl(url)
   }
   const [arrImages, setArrImages] = useState([])
   const [showImageFullUrl, setShowImageFullUrl] = useState(null)
+  const [currentPage, setCurrentPage] = useState(0)
   const handleClose = () => {
     log('close')
     setShowImageFullUrl(null)
   }
-  useEffect(() => {
-    fetch(API_URL)
+  const cmdFetch = url => {
+    const FETCH_URL = url || API_URL
+    fetch(FETCH_URL)
       .then(rs => rs.text())
       .then(data => {
         log(JSON.parse(data))
-        setArrImages(JSON.parse(data).data)
+        setArrImages([...arrImages, ...JSON.parse(data).data])
+        setCurrentPage(currentPage + 1)
       })
+  }
+  useEffect(() => {
+    //cmdFetch()
   }, [])
   const displayArr = arrImages || []
   return (
-    <div className="container">
+    <>
       <ModalImage urlShouldShow={showImageFullUrl} handleCloseCallback={handleClose} />
-
-      <style>
-        {`
+      <InfiniteScroll
+        pageStart={0}
+        loadMore={() => {
+          log('loadmore')
+          cmdFetch(API_URL + `&offset=${currentPage + 1}`)
+        }}
+        hasMore={true}
+        loader={
+          <div className="text-center" key={0}>
+            Loading ...
+          </div>
+        }>
+        <div className="container">
+          <style>
+            {`
             html,body{
                 background: #eee;
                 min-height:100%;
@@ -79,22 +65,24 @@ const Gallery = () => {
           }
           
         `}
-      </style>
-      <h1 className="font-weight-light text-center text-lg-left mt-4 mb-0">Thumbnail Gallery</h1>
+          </style>
+          <h1 className="font-weight-light text-center text-lg-left mt-4 mb-0">Thumbnail Gallery</h1>
 
-      <hr className="mt-2 mb-5" />
+          <hr className="mt-2 mb-5" />
 
-      <div className="row text-center text-lg-left">
-        {displayArr &&
-          displayArr.map((v, i) => {
-            return (
-              <div key={i} className="col-lg-3 col-md-4 col-6">
-                <GalleryItem {...v} tapHandlerCallback={tapHandler} />
-              </div>
-            )
-          })}
-      </div>
-    </div>
+          <div className="row text-center text-lg-left">
+            {displayArr &&
+              displayArr.map((v, i) => {
+                return (
+                  <div key={i} className="col-lg-3 col-md-4 col-6">
+                    <GalleryItem {...v} tapHandlerCallback={tapHandler} />
+                  </div>
+                )
+              })}
+          </div>
+        </div>
+      </InfiniteScroll>
+    </>
   )
 }
 
