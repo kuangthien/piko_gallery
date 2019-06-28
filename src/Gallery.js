@@ -44,7 +44,10 @@ const Gallery = () => {
   }
   const [arrImages, setArrImages] = useState([])
   const [showImageFullUrl, setShowImageFullUrl] = useState(null)
-
+  const handleClose = () => {
+    log('close')
+    setShowImageFullUrl(null)
+  }
   useEffect(() => {
     fetch(API_URL)
       .then(rs => rs.text())
@@ -56,13 +59,14 @@ const Gallery = () => {
   const displayArr = arrImages || []
   return (
     <div className="container">
-      <ModalImage urlShouldShow={showImageFullUrl} />
+      <ModalImage urlShouldShow={showImageFullUrl} handleCloseCallback={handleClose} />
 
       <style>
         {`
-            body{
+            html,body{
                 background: #eee;
-            }
+                min-height:100%;
+             }
           .galItem .img{
               height: 200px;
               width:100%;
